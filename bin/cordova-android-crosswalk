@@ -30,7 +30,7 @@ log.runner = 'cordova-android-crosswalk';
 
 /**
  * Tool arguments
- * Use `-b` or `--build` to specify the build version
+ * Use `-r` or `--release` to specify the release channel
  * Use `-t` or `--target` to specify the target android version
  */
 var Args = {
