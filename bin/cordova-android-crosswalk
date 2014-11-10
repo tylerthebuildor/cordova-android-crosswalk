@@ -14,10 +14,10 @@ var exec = require('child-process-promise').exec;
 var argv = require('minimist')(process.argv.slice(2));
 
 /**
- * Build URLs
+ * Release channel
  * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
  */
-var buildURL = {
+var releaseChannel = {
 	stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/8.37.189.12/arm/crosswalk-cordova-8.37.189.12-arm.zip',
 	beta: 'https://download.01.org/crosswalk/releases/crosswalk/android/beta/9.38.208.8/arm/crosswalk-cordova-9.38.208.8-arm.zip',
 	canary: 'https://download.01.org/crosswalk/releases/crosswalk/android/canary/10.39.235.0/arm/crosswalk-cordova-10.39.235.0-arm.zip'
@@ -72,7 +72,7 @@ function downloadCrosswalk() {
 
 	// Set up Crosswalk verion to Download
 	var download = new Download({ extract: true, strip: 1, mode: '755' })
-		.get(buildURL[Args.release])
+		.get(releaseChannel[Args.release])
 		.dest(__dirname + '/downloads/crosswalk-' + Args.release)
 		.use(progress());
 
