@@ -21,7 +21,7 @@ Simply enter your projects root folder and run:
 $ cordova-android-crosswalk
 ```
 
-This command defaults to Crosswalks stable Cordova Android release. With an Android SDK target of 'android-19'. Crosswalk also offers 'beta' and 'canary' releases if you'd like to change that or the Android SDK target use these flags:
+This command defaults to Crosswalks 'stable' Cordova Android release and automatically finds your Android SDK target using the `android list` command and some regex magic. Crosswalk also offers 'beta' and 'canary' releases if you'd like to change that or the Android SDK target use these flags:
 
 ```sh
 $ cordova-android-crosswalk --release canary --target android-18
