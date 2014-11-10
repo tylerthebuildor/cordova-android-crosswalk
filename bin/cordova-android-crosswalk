@@ -15,7 +15,7 @@ var argv = require('minimist')(process.argv.slice(2));
 
 /**
  * Build URLs
- * We must pressure crosswalk-project.org to offer a latest-release url for each build
+ * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
  */
 var buildURL = {
 	stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/8.37.189.12/arm/crosswalk-cordova-8.37.189.12-arm.zip',
@@ -35,25 +35,48 @@ log.runner = 'cordova-android-crosswalk';
  */
 var Args = {
 	release: argv._[0] || argv.r || argv.release || 'stable',
-	target: argv._[1] || argv.t || argv.target || 'android-19',
+	target: argv._[1] || argv.t || argv.target || null,
 }
 
 /**
  * Void Main
  */ main();
 function main() {
-	downloadCrosswalk();
+	if(Args.target) {
+		downloadCrosswalk();
+	} else {
+		getSDKTarget();
+	}
+}
+
+/**
+ * Get SDK target
+ */
+function getSDKTarget() {
+	exec('android list')
+		.then(function(result) {
+			Args.target = result.stdout.match(/w*android-\w*/);
+
+			log.writeln('Found SDK target: ' + Args.target);
+			downloadCrosswalk();
+		})
+		.fail(function(err) {
+			log.error(err);
+		});
 }
 
 /**
  * Download latest Crosswalk version
  */
 function downloadCrosswalk() {
+
+	// Set up Crosswalk verion to Download
 	var download = new Download({ extract: true, strip: 1, mode: '755' })
 		.get(buildURL[Args.release])
 		.dest(__dirname + '/downloads/crosswalk-' + Args.release)
 		.use(progress());
 
+	// Remove previously downloaded Crosswalk version
 	fs.remove(__dirname + '/downloads/crosswalk-' + Args.release,
 		function(err){
 			if(err) {
@@ -63,6 +86,7 @@ function downloadCrosswalk() {
 			}
 		});
 
+	// Start Downloading
 	download.run(
 		function (err, files, stream) {
 			if(err) {
@@ -83,6 +107,7 @@ function downloadCrosswalk() {
  */
 function buildReplace() {
 
+	// Clean CordovaLib dir
 	fs.remove('./platforms/android/CordovaLib/*',
 		function(err){
 			if(err) {
@@ -91,6 +116,7 @@ function buildReplace() {
 				log.writeln('Removed old CordovaLib');
 			}
 
+			// Replace CordovaLib with Crosswalks version
 			fs.copy(__dirname + '/downloads/crosswalk-stable/framework', './platforms/android/CordovaLib',
 				function(err) {
 					if(err) {
@@ -99,6 +125,7 @@ function buildReplace() {
 						log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Args.release + ' framework');
 					}
 
+					// Add meta VERSION file
 					fs.copy(__dirname + '/downloads/crosswalk-' + Args.release + '/VERSION', './platforms/android/VERSION',
 						function(err) {
 							if(err) {
@@ -123,11 +150,31 @@ function buildPermissions() {
 	fs.readFile('./platforms/android/AndroidManifest.xml', function(err, data) {
 		parser.parseString(data, function (err, result) {
 
+			// Has Dependency
+			var hasDep = {
+				wifi: false,
+				network: false
+			}
+
+			// Check for pre-existing dep
+			for(var i=0; i<result.manifest['uses-permission'].length; i++) {
+				if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
+					hasDep.wifi = true;
+				}
+				if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_NETWORK_STATE"}}') {
+					hasDep.network = true;
+				}
+			}
+
 			// Add permissions to xml
-			result.manifest['uses-permission']
-				.push({ '$': { 'android:name': 'android.permission.ACCESS_WIFI_STATE' } });
-			result.manifest['uses-permission']
-				.push({ '$': { 'android:name': 'android.permission.ACCESS_NETWORK_STATE' } });
+			if(!hasDep.wifi) {
+				result.manifest['uses-permission']
+					.push({ '$': { 'android:name': 'android.permission.ACCESS_WIFI_STATE' } });
+			}
+			if(!hasDep.network) {
+				result.manifest['uses-permission']
+					.push({ '$': { 'android:name': 'android.permission.ACCESS_NETWORK_STATE' } });
+			}
 
 			// Rebuild xml
 			var builder = new xml2js.Builder();
@@ -163,8 +210,5 @@ function buildFinal() {
 		})
 		.fail(function(err) {
 			log.error(err);
-		})
-		.progress(function(childProcess) {
-			//log.writeln(childProcess.pid);
 		});
 }

@@ -38,6 +38,8 @@ $ cordova-android-crosswalk -r canary -t android-18
  - Write Tests
  - Pressure crosswalk-project.org to offer a latest-release url for each build
  - Implement promises to clean up code
+ - Add help flag that prints commands
+ - Implement more helpful errors
 
 License
 ----
