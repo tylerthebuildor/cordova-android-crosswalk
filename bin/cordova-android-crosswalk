@@ -12,35 +12,38 @@ var exec = require('child-process-promise').exec;
 var argv = require('minimist')(process.argv.slice(2));
 
 /**
- * Release Channels
- * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
+ * Namespace
  */
-var ReleaseChannels = {
-	stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/8.37.189.12/arm/crosswalk-cordova-8.37.189.12-arm.zip',
-	beta: 'https://download.01.org/crosswalk/releases/crosswalk/android/beta/9.38.208.8/arm/crosswalk-cordova-9.38.208.8-arm.zip',
-	canary: 'https://download.01.org/crosswalk/releases/crosswalk/android/canary/10.39.235.0/arm/crosswalk-cordova-10.39.235.0-arm.zip'
-};
+var Runtime = {
 
-/**
- * Tool arguments
- * Use `-r` or `--release` to specify the release channel
- * Use `-t` or `--target` to specify the target android version
- */
-var Args = {
-	release: argv._[0] || argv.r || argv.release || 'stable',
-	target: argv._[1] || argv.t || argv.target || null,
-};
+	/**
+	 * Release Channels
+	 * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
+	 */
+	ReleaseChannels: {
+		stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/8.37.189.12/arm/crosswalk-cordova-8.37.189.12-arm.zip',
+		beta: 'https://download.01.org/crosswalk/releases/crosswalk/android/beta/9.38.208.8/arm/crosswalk-cordova-9.38.208.8-arm.zip',
+		canary: 'https://download.01.org/crosswalk/releases/crosswalk/android/canary/10.39.235.0/arm/crosswalk-cordova-10.39.235.0-arm.zip'
+	},
 
-var runtime = {
+	/**
+	 * Tool arguments
+	 * Use `-r` or `--release` to specify the release channel
+	 * Use `-t` or `--target` to specify the target android version
+	 */
+	Args: {
+		release: argv._[0] || argv.r || argv.release || 'stable',
+		target: argv._[1] || argv.t || argv.target || null,
+	},
 
 	/**
 	 * Void Main
 	 */
 	main: function() {
-		if(Args.target) {
-			runtime.downloadCrosswalk();
+		if(Runtime.Args.target) {
+			Runtime.downloadCrosswalk();
 		} else {
-			runtime.getSDKTarget();
+			Runtime.getSDKTarget();
 		}
 	},
 
@@ -50,10 +53,10 @@ var runtime = {
 	getSDKTarget: function() {
 		exec('android list')
 			.then(function(result) {
-				Args.target = result.stdout.match(/w*android-\w*/);
+				Runtime.Args.target = result.stdout.match(/w*android-\w*/);
 
-				log.writeln('Found SDK target: ' + Args.target);
-				runtime.downloadCrosswalk();
+				log.writeln('Found SDK target: ' + Runtime.Args.target);
+				Runtime.downloadCrosswalk();
 			})
 			.fail(function(err) {
 				log.error(err);
@@ -67,17 +70,17 @@ var runtime = {
 
 		// Set up Crosswalk verion to Download
 		var download = new Download({ extract: true, strip: 1, mode: '755' })
-			.get(ReleaseChannels[Args.release])
-			.dest(__dirname + '/downloads/crosswalk-' + Args.release)
+			.get(Runtime.ReleaseChannels[Runtime.Args.release])
+			.dest(__dirname + '/downloads/crosswalk-' + Runtime.Args.release)
 			.use(progress());
 
 		// Remove previously downloaded Crosswalk version
-		fs.remove(__dirname + '/downloads/crosswalk-' + Args.release,
+		fs.remove(__dirname + '/downloads/crosswalk-' + Runtime.Args.release,
 			function(err){
 				if(err) {
 					throw err;
 				} else {
-					log.writeln('Removed old Crosswalk ' + Args.release);
+					log.writeln('Removed old Crosswalk ' + Runtime.Args.release);
 				}
 			});
 
@@ -87,8 +90,8 @@ var runtime = {
 				if(err) {
 					throw err;
 				} else {
-					log.writeln('Crosswalk ' + Args.release + ' downloaded succesfully');
-					runtime.buildReplace();
+					log.writeln('Crosswalk ' + Runtime.Args.release + ' downloaded succesfully');
+					Runtime.buildReplace();
 				}
 			});
 
@@ -118,17 +121,17 @@ var runtime = {
 						if(err) {
 							throw(err);
 						} else {
-							log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Args.release + ' framework');
+							log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Runtime.Args.release + ' framework');
 						}
 
 						// Add meta VERSION file
-						fs.copy(__dirname + '/downloads/crosswalk-' + Args.release + '/VERSION', './platforms/android/VERSION',
+						fs.copy(__dirname + '/downloads/crosswalk-' + Runtime.Args.release + '/VERSION', './platforms/android/VERSION',
 							function(err) {
 								if(err) {
 									throw(err);
 								} else {
 									log.writeln('./platforms/android/VERSION file was replaced with Crosswalk VERSION file');
-									runtime.buildPermissions();
+									Runtime.buildPermissions();
 								}
 							});
 					});
@@ -182,7 +185,7 @@ var runtime = {
 				  	throw(err);
 				  } else {
 				  	log.writeln('Added AndroidManifest.xml permissions');
-						runtime.buildFinal();
+						Runtime.buildFinal();
 				  }
 				});
 
@@ -199,10 +202,10 @@ var runtime = {
 	 * cd ../../..
 	 */
 	buildFinal: function() {
-		exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Args.target + '" && ant debug && cd ../../..')
+		exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Runtime.Args.target + '" && ant debug && cd ../../..')
 			.then(function(result) {
 				log.writeln(result.stdout);
-				log.writeln('Congratulations! you are now using Crosswalk ' + Args.release + '. Go ahead and and try it out "cordova run android"');
+				log.writeln('Congratulations! you are now using Crosswalk ' + Runtime.Args.release + '. Go ahead and and try it out "cordova run android"');
 			})
 			.fail(function(err) {
 				log.error(err);
@@ -214,4 +217,4 @@ var runtime = {
 /**
  * Init Main
  */
-runtime.main();
+Runtime.main();
