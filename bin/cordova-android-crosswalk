@@ -199,7 +199,7 @@ function buildPermissions() {
  * Run the final build commands
  * export ANDROID_HOME=$(dirname $(dirname $(which android)))
  * cd platforms/android/CordovaLib/
- * android update project --subprojects --path . \ --target "android-19"
+ * android update project --subprojects --path . --target "android-19"
  * ant debug
  * cd ../../..
  */

@@ -50,4 +50,6 @@ vendor
 _gh_pages
 tmp
 temp
-TODO.md
+bin/downloads/crosswalk-beta/*
+bin/downloads/crosswalk-canary/*
+bin/downloads/crosswalk-stable/*
