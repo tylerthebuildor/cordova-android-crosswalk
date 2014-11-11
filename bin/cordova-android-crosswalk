@@ -107,7 +107,7 @@ var Runtime = {
 	buildReplace: function() {
 
 		// Clean CordovaLib dir
-		fs.remove('./platforms/android/CordovaLib/*',
+		fs.remove('./platforms/android/CordovaLib/',
 			function(err){
 				if(err) {
 					throw err;
