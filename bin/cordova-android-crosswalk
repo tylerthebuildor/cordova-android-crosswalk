@@ -53,7 +53,7 @@ var Runtime = {
 	getSDKTarget: function() {
 		exec('android list')
 			.then(function(result) {
-				Runtime.Args.target = result.stdout.match(/w*android-\w*/);
+				Runtime.Args.target = result.stdout.match(/w*android-\w*/)[0];
 
 				log.writeln('Found SDK target: ' + Runtime.Args.target);
 				Runtime.downloadCrosswalk();
