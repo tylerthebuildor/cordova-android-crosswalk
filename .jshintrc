@@ -17,6 +17,6 @@
     "before": true,
     "after": true,
     "describe": true,
-    "it": true,
+    "it": true
   }
 }
