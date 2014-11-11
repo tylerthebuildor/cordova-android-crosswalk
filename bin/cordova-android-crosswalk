@@ -147,7 +147,13 @@ var Runtime = {
 	buildPermissions: function() {
 		var parser = new xml2js.Parser();
 		fs.readFile('./platforms/android/AndroidManifest.xml', function(err, data) {
+			if(err) {
+				throw(err);
+			}
 			parser.parseString(data, function (err, result) {
+			if(err) {
+				throw(err);
+			}
 
 				// Has Dependency
 				var hasDep = {
