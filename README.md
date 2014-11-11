@@ -1,4 +1,4 @@
-# Cordova Android Crosswalk Command Line Tool
+# cordova-android-crosswalk
 
 This command line tool is an easy way to migrate your existing Cordova based (including Ionic) projects over to use Crosswalks Chromium webveiw. The performance benefit is huge, you get access to all the latest web APIs, and the only major draw back is increased apk size.
 
