@@ -23,11 +23,6 @@ var ReleaseChannels = {
 };
 
 /**
- * Log runner
- */
-log.runner = 'cordova-android-crosswalk';
-
-/**
  * Tool arguments
  * Use `-r` or `--release` to specify the release channel
  * Use `-t` or `--target` to specify the target android version
