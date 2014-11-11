@@ -36,7 +36,7 @@ log.runner = 'cordova-android-crosswalk';
 var Args = {
 	release: argv._[0] || argv.r || argv.release || 'stable',
 	target: argv._[1] || argv.t || argv.target || null,
-}
+};
 
 /**
  * Void Main
@@ -155,7 +155,7 @@ function buildPermissions() {
 			var hasDep = {
 				wifi: false,
 				network: false
-			}
+			};
 
 			// Check for pre-existing dep
 			for(var i=0; i<result.manifest['uses-permission'].length; i++) {
@@ -186,7 +186,7 @@ function buildPermissions() {
 			  if(err) {
 			  	throw(err);
 			  } else {
-			  	log.writeln('Added AndroidManifest.xml permissions')
+			  	log.writeln('Added AndroidManifest.xml permissions');
 					buildFinal();
 			  }
 			});
@@ -204,7 +204,7 @@ function buildPermissions() {
  * cd ../../..
  */
 function buildFinal() {
-	exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . \ --target "' + Args.target + '" && ant debug && cd ../../..')
+	exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Args.target + '" && ant debug && cd ../../..')
 		.then(function(result) {
 			log.writeln(result.stdout);
 			log.writeln('Congratulations! you are now using Crosswalk ' + Args.release + '. Go ahead and and try it out "cordova run android"');
