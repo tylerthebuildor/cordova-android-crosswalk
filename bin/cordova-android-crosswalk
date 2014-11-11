@@ -3,8 +3,7 @@
 /**
  * Dependencies
  */
-var Promise = require("bluebird");
-var fs = Promise.promisifyAll(require('fs-extra'));
+var fs = require('fs-extra');
 var xml2js = require('xml2js');
 var log = require('verbalize');
 var Download = require('download');
@@ -155,10 +154,10 @@ var runtime = {
 
 				// Check for pre-existing dep
 				for(var i=0; i<result.manifest['uses-permission'].length; i++) {
-					if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
+					if(JSON.stringify(result.manifest['uses-permission'][i]) === '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
 						hasDep.wifi = true;
 					}
-					if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_NETWORK_STATE"}}') {
+					if(JSON.stringify(result.manifest['uses-permission'][i]) === '{"$":{"android:name":"android.permission.ACCESS_NETWORK_STATE"}}') {
 						hasDep.network = true;
 					}
 				}
