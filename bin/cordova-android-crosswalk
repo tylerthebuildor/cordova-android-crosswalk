@@ -32,178 +32,187 @@ var Args = {
 	target: argv._[1] || argv.t || argv.target || null,
 };
 
-/**
- * Void Main
- */ main();
-function main() {
-	if(Args.target) {
-		downloadCrosswalk();
-	} else {
-		getSDKTarget();
-	}
-}
+var runtime = {
 
-/**
- * Get SDK target
- */
-function getSDKTarget() {
-	exec('android list')
-		.then(function(result) {
-			Args.target = result.stdout.match(/w*android-\w*/);
+	/**
+	 * Void Main
+	 */
+	main: function() {
+		if(Args.target) {
+			runtime.downloadCrosswalk();
+		} else {
+			runtime.getSDKTarget();
+		}
+	},
 
-			log.writeln('Found SDK target: ' + Args.target);
-			downloadCrosswalk();
-		})
-		.fail(function(err) {
-			log.error(err);
-		});
-}
+	/**
+	 * Get SDK target
+	 */
+	getSDKTarget: function() {
+		exec('android list')
+			.then(function(result) {
+				Args.target = result.stdout.match(/w*android-\w*/);
 
-/**
- * Download latest Crosswalk version
- */
-function downloadCrosswalk() {
+				log.writeln('Found SDK target: ' + Args.target);
+				runtime.downloadCrosswalk();
+			})
+			.fail(function(err) {
+				log.error(err);
+			});
+	},
 
-	// Set up Crosswalk verion to Download
-	var download = new Download({ extract: true, strip: 1, mode: '755' })
-		.get(ReleaseChannels[Args.release])
-		.dest(__dirname + '/downloads/crosswalk-' + Args.release)
-		.use(progress());
+	/**
+	 * Download latest Crosswalk version
+	 */
+	downloadCrosswalk: function() {
 
-	// Remove previously downloaded Crosswalk version
-	fs.remove(__dirname + '/downloads/crosswalk-' + Args.release,
-		function(err){
-			if(err) {
-				throw err;
-			} else {
-				log.writeln('Removed old Crosswalk ' + Args.release);
-			}
-		});
+		// Set up Crosswalk verion to Download
+		var download = new Download({ extract: true, strip: 1, mode: '755' })
+			.get(ReleaseChannels[Args.release])
+			.dest(__dirname + '/downloads/crosswalk-' + Args.release)
+			.use(progress());
 
-	// Start Downloading
-	download.run(
-		function (err, files, stream) {
-			if(err) {
-				throw err;
-			} else {
-				log.writeln('Crosswalk ' + Args.release + ' downloaded succesfully');
-				buildReplace();
-			}
-		});
-
-}
-
-/**
- * Replace 'CordovaLib' folder with Crosswalk's 'framework' folder
- * rm -Rf platforms/android/CordovaLib/*
- * cp -a <path_to_unpacked_bundle>/framework/* \ platforms/android/CordovaLib/
- * Replace 'VERSION' file with Crosswalk 'VERSION' file
- * cp -a <path_to_bundle>/VERSION platforms/android/
- */
-function buildReplace() {
-
-	// Clean CordovaLib dir
-	fs.remove('./platforms/android/CordovaLib/*',
-		function(err){
-			if(err) {
-				throw err;
-			} else {
-				log.writeln('Removed old CordovaLib');
-			}
-
-			// Replace CordovaLib with Crosswalks version
-			fs.copy(__dirname + '/downloads/crosswalk-stable/framework', './platforms/android/CordovaLib',
-				function(err) {
-					if(err) {
-						throw(err);
-					} else {
-						log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Args.release + ' framework');
-					}
-
-					// Add meta VERSION file
-					fs.copy(__dirname + '/downloads/crosswalk-' + Args.release + '/VERSION', './platforms/android/VERSION',
-						function(err) {
-							if(err) {
-								throw(err);
-							} else {
-								log.writeln('./platforms/android/VERSION file was replaced with Crosswalk VERSION file');
-								buildPermissions();
-							}
-						});
-				});
-		});
-}
-
-/**
- * Add correct permisions for Crosswalk to AndroidManifest.xml
- * platforms/android/AndroidManifest.xml, adding these lines just before the existing <application> element:
- * <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
- * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
- */
-function buildPermissions() {
-	var parser = new xml2js.Parser();
-	fs.readFile('./platforms/android/AndroidManifest.xml', function(err, data) {
-		parser.parseString(data, function (err, result) {
-
-			// Has Dependency
-			var hasDep = {
-				wifi: false,
-				network: false
-			};
-
-			// Check for pre-existing dep
-			for(var i=0; i<result.manifest['uses-permission'].length; i++) {
-				if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
-					hasDep.wifi = true;
+		// Remove previously downloaded Crosswalk version
+		fs.remove(__dirname + '/downloads/crosswalk-' + Args.release,
+			function(err){
+				if(err) {
+					throw err;
+				} else {
+					log.writeln('Removed old Crosswalk ' + Args.release);
 				}
-				if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_NETWORK_STATE"}}') {
-					hasDep.network = true;
-				}
-			}
-
-			// Add permissions to xml
-			if(!hasDep.wifi) {
-				result.manifest['uses-permission']
-					.push({ '$': { 'android:name': 'android.permission.ACCESS_WIFI_STATE' } });
-			}
-			if(!hasDep.network) {
-				result.manifest['uses-permission']
-					.push({ '$': { 'android:name': 'android.permission.ACCESS_NETWORK_STATE' } });
-			}
-
-			// Rebuild xml
-			var builder = new xml2js.Builder();
-			var xml = builder.buildObject(result);
-
-			// Update xml file
-			fs.outputFile('./platforms/android/AndroidManifest.xml', xml, function(err) {
-			  if(err) {
-			  	throw(err);
-			  } else {
-			  	log.writeln('Added AndroidManifest.xml permissions');
-					buildFinal();
-			  }
 			});
 
+		// Start Downloading
+		download.run(
+			function (err) {
+				if(err) {
+					throw err;
+				} else {
+					log.writeln('Crosswalk ' + Args.release + ' downloaded succesfully');
+					runtime.buildReplace();
+				}
+			});
+
+	},
+
+	/**
+	 * Replace 'CordovaLib' folder with Crosswalk's 'framework' folder
+	 * rm -Rf platforms/android/CordovaLib/*
+	 * cp -a <path_to_unpacked_bundle>/framework/* \ platforms/android/CordovaLib/
+	 * Replace 'VERSION' file with Crosswalk 'VERSION' file
+	 * cp -a <path_to_bundle>/VERSION platforms/android/
+	 */
+	buildReplace: function() {
+
+		// Clean CordovaLib dir
+		fs.remove('./platforms/android/CordovaLib/*',
+			function(err){
+				if(err) {
+					throw err;
+				} else {
+					log.writeln('Removed old CordovaLib');
+				}
+
+				// Replace CordovaLib with Crosswalks version
+				fs.copy(__dirname + '/downloads/crosswalk-stable/framework', './platforms/android/CordovaLib',
+					function(err) {
+						if(err) {
+							throw(err);
+						} else {
+							log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Args.release + ' framework');
+						}
+
+						// Add meta VERSION file
+						fs.copy(__dirname + '/downloads/crosswalk-' + Args.release + '/VERSION', './platforms/android/VERSION',
+							function(err) {
+								if(err) {
+									throw(err);
+								} else {
+									log.writeln('./platforms/android/VERSION file was replaced with Crosswalk VERSION file');
+									runtime.buildPermissions();
+								}
+							});
+					});
+			});
+	},
+
+	/**
+	 * Add correct permisions for Crosswalk to AndroidManifest.xml
+	 * platforms/android/AndroidManifest.xml, adding these lines just before the existing <application> element:
+	 * <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	 * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	 */
+	buildPermissions: function() {
+		var parser = new xml2js.Parser();
+		fs.readFile('./platforms/android/AndroidManifest.xml', function(err, data) {
+			parser.parseString(data, function (err, result) {
+
+				// Has Dependency
+				var hasDep = {
+					wifi: false,
+					network: false
+				};
+
+				// Check for pre-existing dep
+				for(var i=0; i<result.manifest['uses-permission'].length; i++) {
+					if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
+						hasDep.wifi = true;
+					}
+					if(JSON.stringify(result.manifest['uses-permission'][i]) == '{"$":{"android:name":"android.permission.ACCESS_NETWORK_STATE"}}') {
+						hasDep.network = true;
+					}
+				}
+
+				// Add permissions to xml
+				if(!hasDep.wifi) {
+					result.manifest['uses-permission']
+						.push({ '$': { 'android:name': 'android.permission.ACCESS_WIFI_STATE' } });
+				}
+				if(!hasDep.network) {
+					result.manifest['uses-permission']
+						.push({ '$': { 'android:name': 'android.permission.ACCESS_NETWORK_STATE' } });
+				}
+
+				// Rebuild xml
+				var builder = new xml2js.Builder();
+				var xml = builder.buildObject(result);
+
+				// Update xml file
+				fs.outputFile('./platforms/android/AndroidManifest.xml', xml, function(err) {
+				  if(err) {
+				  	throw(err);
+				  } else {
+				  	log.writeln('Added AndroidManifest.xml permissions');
+						runtime.buildFinal();
+				  }
+				});
+
+			});
 		});
-	});
-}
+	},
+
+	/**
+	 * Run the final build commands
+	 * export ANDROID_HOME=$(dirname $(dirname $(which android)))
+	 * cd platforms/android/CordovaLib/
+	 * android update project --subprojects --path . --target "android-19"
+	 * ant debug
+	 * cd ../../..
+	 */
+	buildFinal: function() {
+		exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Args.target + '" && ant debug && cd ../../..')
+			.then(function(result) {
+				log.writeln(result.stdout);
+				log.writeln('Congratulations! you are now using Crosswalk ' + Args.release + '. Go ahead and and try it out "cordova run android"');
+			})
+			.fail(function(err) {
+				log.error(err);
+			});
+	}
+
+};
 
 /**
- * Run the final build commands
- * export ANDROID_HOME=$(dirname $(dirname $(which android)))
- * cd platforms/android/CordovaLib/
- * android update project --subprojects --path . --target "android-19"
- * ant debug
- * cd ../../..
+ * Init Main
  */
-function buildFinal() {
-	exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Args.target + '" && ant debug && cd ../../..')
-		.then(function(result) {
-			log.writeln(result.stdout);
-			log.writeln('Congratulations! you are now using Crosswalk ' + Args.release + '. Go ahead and and try it out "cordova run android"');
-		})
-		.fail(function(err) {
-			log.error(err);
-		});
-}
+runtime.main();
