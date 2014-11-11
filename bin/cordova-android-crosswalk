@@ -6,7 +6,6 @@
 var Promise = require("bluebird");
 var fs = Promise.promisifyAll(require('fs-extra'));
 var xml2js = require('xml2js');
-var path = require('path');
 var log = require('verbalize');
 var Download = require('download');
 var progress = require('download-status');
