@@ -3,6 +3,7 @@
 /**
  * Dependencies
  */
+var Q = require('q');
 var fs = require('fs-extra');
 var xml2js = require('xml2js');
 var log = require('verbalize');
@@ -15,15 +16,19 @@ var argv = require('minimist')(process.argv.slice(2));
  * Namespace
  */
 var Runtime = {
+	/**
+	 * Is this running on Windows?
+	 */
+	isWin: /^win/.test(process.platform),
 
 	/**
 	 * Release Channels
 	 * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
 	 */
 	ReleaseChannels: {
-		stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/8.37.189.12/arm/crosswalk-cordova-8.37.189.12-arm.zip',
-		beta: 'https://download.01.org/crosswalk/releases/crosswalk/android/beta/9.38.208.8/arm/crosswalk-cordova-9.38.208.8-arm.zip',
-		canary: 'https://download.01.org/crosswalk/releases/crosswalk/android/canary/10.39.235.0/arm/crosswalk-cordova-10.39.235.0-arm.zip'
+		stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/8.37.189.14/arm/crosswalk-cordova-8.37.189.14-arm.zip',
+		beta: 'https://download.01.org/crosswalk/releases/crosswalk/android/beta/10.39.235.6/arm/crosswalk-cordova-10.39.235.6-arm.zip',
+		canary: 'https://download.01.org/crosswalk/releases/crosswalk/android/canary/11.39.246.0/arm/crosswalk-cordova-11.39.246.0-arm.zip'
 	},
 
 	/**
@@ -41,7 +46,7 @@ var Runtime = {
 	 */
 	main: function() {
 		if(Runtime.Args.target) {
-			Runtime.downloadCrosswalk();
+			Runtime.checkCordovaVersion();
 		} else {
 			Runtime.getSDKTarget();
 		}
@@ -56,10 +61,47 @@ var Runtime = {
 				Runtime.Args.target = result.stdout.match(/w*android-\w*/)[0];
 
 				log.writeln('Found SDK target: ' + Runtime.Args.target);
-				Runtime.downloadCrosswalk();
+				Runtime.checkCordovaVersion();
 			})
 			.fail(function(err) {
 				log.error(err);
+			});
+	},
+
+	/**
+	 * Check Cordova version
+	 */
+	checkCordovaVersion: function() {
+		exec('cordova --version')
+			.then(function(result) {
+				var is35 = result.stdout.match(/w*3.5.0\w*/);
+
+				if(is35) {
+					log.writeln('You\'re already running Cordova 3.5. Good job!');
+					Runtime.checkEnv();
+				} else {
+					log.writeln('First remove your current install of Cordova "npm uninstall -g cordova"');
+					log.writeln('Then install Corodva 3.5 using "npm install -g cordova@3.5"');
+				}
+			})
+			.fail(function(err) {
+				log.error(err);
+			});
+	},
+
+	/**
+	 * Check if this is a Cordova project with Android platform added
+	 */
+	checkEnv: function() {
+		fs.readFile('./platforms/android/AndroidManifest.xml',
+			function(err) {
+				if(err) {
+					log.error(err);
+					log.writeln('Either this is not the root folder of a Cordova Project');
+					log.writeln('Or you have yet to add the android platform "cordova platform add android"');
+				} else {
+					Runtime.downloadCrosswalk();
+				}
 			});
 	},
 
@@ -68,7 +110,7 @@ var Runtime = {
 	 */
 	downloadCrosswalk: function() {
 
-		// Set up Crosswalk verion to Download
+		// Set up Crosswalk download
 		var download = new Download({ extract: true, strip: 1, mode: '755' })
 			.get(Runtime.ReleaseChannels[Runtime.Args.release])
 			.dest(__dirname + '/downloads/crosswalk-' + Runtime.Args.release)
@@ -78,7 +120,7 @@ var Runtime = {
 		fs.remove(__dirname + '/downloads/crosswalk-' + Runtime.Args.release,
 			function(err){
 				if(err) {
-					throw err;
+					log.error(err);
 				} else {
 					log.writeln('Removed old Crosswalk ' + Runtime.Args.release);
 				}
@@ -88,7 +130,7 @@ var Runtime = {
 		download.run(
 			function (err) {
 				if(err) {
-					throw err;
+					log.error(err);
 				} else {
 					log.writeln('Crosswalk ' + Runtime.Args.release + ' downloaded succesfully');
 					Runtime.buildReplace();
@@ -105,37 +147,34 @@ var Runtime = {
 	 * cp -a <path_to_bundle>/VERSION platforms/android/
 	 */
 	buildReplace: function() {
+		var defer = Q.defer();
 
-		// Clean CordovaLib dir
-		fs.remove('./platforms/android/CordovaLib/',
-			function(err){
-				if(err) {
-					throw err;
-				} else {
-					log.writeln('Removed old CordovaLib');
-				}
+		// Delete CordovaLib folder
+		fs.remove('./platforms/android/CordovaLib', defer.resolve);
 
-				// Replace CordovaLib with Crosswalks version
-				fs.copy(__dirname + '/downloads/crosswalk-stable/framework', './platforms/android/CordovaLib',
-					function(err) {
-						if(err) {
-							throw(err);
-						} else {
-							log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Runtime.Args.release + ' framework');
-						}
+		// Replace with Crosswalks framework folder
+		defer.promise.then(function() {
+			log.writeln('Removed old CordovaLib');
+			fs.copy(__dirname + '/downloads/crosswalk-stable/framework', './platforms/android/CordovaLib', defer.resolve);
+		});
 
-						// Add meta VERSION file
-						fs.copy(__dirname + '/downloads/crosswalk-' + Runtime.Args.release + '/VERSION', './platforms/android/VERSION',
-							function(err) {
-								if(err) {
-									throw(err);
-								} else {
-									log.writeln('./platforms/android/VERSION file was replaced with Crosswalk VERSION file');
-									Runtime.buildPermissions();
-								}
-							});
-					});
-			});
+		// Replace VERSION file
+		defer.promise.then(function() {
+			log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Runtime.Args.release + ' framework');
+			fs.copy(__dirname + '/downloads/crosswalk-' + Runtime.Args.release + '/VERSION', './platforms/android/VERSION', defer.resolve);
+		});
+
+		// Build Permissions
+		defer.promise.then(function() {
+			log.writeln('./platforms/android/VERSION file was replaced with Crosswalk VERSION file');
+			Runtime.buildPermissions();
+		});
+
+		// Catch all errors
+		defer.promise.catch(function(err) {
+			log.error(err);
+		});
+
 	},
 
 	/**
@@ -146,46 +185,50 @@ var Runtime = {
 	 */
 	buildPermissions: function() {
 		var parser = new xml2js.Parser();
+
+		// Read AndroidManifest.xml
 		fs.readFile('./platforms/android/AndroidManifest.xml', function(err, data) {
 			if(err) {
 				throw(err);
 			}
-			parser.parseString(data, function (err, result) {
-			if(err) {
-				throw(err);
-			}
 
-				// Has Dependency
-				var hasDep = {
+			// Parse XML to JSON
+			parser.parseString(data, function (err, result) {
+				if(err) {
+					throw(err);
+				}
+
+				// Has Permission
+				var hasPermission = {
 					wifi: false,
 					network: false
 				};
 
-				// Check for pre-existing dep
+				// Check if Permissions have already been added
 				for(var i=0; i<result.manifest['uses-permission'].length; i++) {
 					if(JSON.stringify(result.manifest['uses-permission'][i]) === '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
-						hasDep.wifi = true;
+						hasPermission.wifi = true;
 					}
 					if(JSON.stringify(result.manifest['uses-permission'][i]) === '{"$":{"android:name":"android.permission.ACCESS_NETWORK_STATE"}}') {
-						hasDep.network = true;
+						hasPermission.network = true;
 					}
 				}
 
-				// Add permissions to xml
-				if(!hasDep.wifi) {
+				// Add permissions to JSON object
+				if(!hasPermission.wifi) {
 					result.manifest['uses-permission']
 						.push({ '$': { 'android:name': 'android.permission.ACCESS_WIFI_STATE' } });
 				}
-				if(!hasDep.network) {
+				if(!hasPermission.network) {
 					result.manifest['uses-permission']
 						.push({ '$': { 'android:name': 'android.permission.ACCESS_NETWORK_STATE' } });
 				}
 
-				// Rebuild xml
+				// Convert JSON back to XML
 				var builder = new xml2js.Builder();
 				var xml = builder.buildObject(result);
 
-				// Update xml file
+				// Update XML file
 				fs.outputFile('./platforms/android/AndroidManifest.xml', xml, function(err) {
 				  if(err) {
 				  	throw(err);
@@ -208,7 +251,11 @@ var Runtime = {
 	 * cd ../../..
 	 */
 	buildFinal: function() {
-		exec('export ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Runtime.Args.target + '" && ant debug && cd ../../..')
+		var pathCmd = Runtime.isWin ? 'SET' : 'export';
+		var commands = pathCmd + ' ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Runtime.Args.target + '" && ant debug && cd ../../..';
+
+		// Executes the custom tidy up commands
+		exec(commands)
 			.then(function(result) {
 				log.writeln(result.stdout);
 				log.writeln('Congratulations! you are now using Crosswalk ' + Runtime.Args.release + '. Go ahead and and try it out "cordova run android"');
