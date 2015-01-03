@@ -1,7 +1,7 @@
 {
   "name": "cordova-android-crosswalk",
   "description": "Automagically migrates your Cordova Android projects so they use Crosswalks Chromium webview.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "homepage": "https://github.com/tylerbuchea/cordova-android-crosswalk",
   "author": {
     "name": "Tyler Buchea",

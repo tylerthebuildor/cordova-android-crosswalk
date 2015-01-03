@@ -2,13 +2,8 @@
 
 This command line tool is an easy way to migrate your existing Cordova based (including Ionic) projects over to use Crosswalks Chromium webview. The performance benefit is huge, you get access to all the latest web APIs, and the only major draw back is increased apk size.
 
-##### Caution!
-Please use Cordova 3.5 for initially building and running your projects. Crosswalk
-currently works with Cordova 3.5 only. You can install using `$ npm install -g cordova@3.5`.
-See more details on Crosswalks official [migration guide].
-
 ### Version
-0.1.2
+0.1.3
 
 ### Installation
 
@@ -45,6 +40,7 @@ $ cordova-android-crosswalk -r canary -t android-19
  - Pressure crosswalk-project.org to offer a latest-release url for each build
  - ~~Implement promises to clean up code~~
  - Add help flag that prints commands
+ - Add version flag
  - ~~Implement more helpful errors~~
 
 License
