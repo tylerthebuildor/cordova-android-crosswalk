@@ -158,7 +158,7 @@ var Runtime = {
 		// Replace with Crosswalks framework folder
 		defer.promise.then(function() {
 			log.writeln('Removed old CordovaLib');
-			fs.copy(__dirname + '/downloads/crosswalk-stable/framework', './platforms/android/CordovaLib', defer.resolve);
+			fs.copy(__dirname + '/downloads/crosswalk-' + Runtime.Args.release + '/framework', './platforms/android/CordovaLib', defer.resolve);
 		});
 
 		// Replace VERSION file
