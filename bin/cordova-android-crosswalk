@@ -91,7 +91,7 @@ var Runtime = {
 		var printCmd = Runtime.isWin ? 'type' : 'cat';
 		exec(printCmd + ' platforms/android/cordova/version')
 			.then(function(result) {
-				var is35 = result.stdout.match(/w*3.5.1\w*/);
+				var is35 = result.stdout.match(/w*3.5\w*/);
 
 				if(is35) {
 					log.writeln('You\'re already running Cordova 3.5. Good job!');
