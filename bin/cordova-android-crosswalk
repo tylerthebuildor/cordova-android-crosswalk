@@ -66,6 +66,7 @@ var Runtime = {
       Runtime.Args.version,
       'arm/crosswalk-cordova-' + Runtime.Args.version + '-arm.zip'
     ].join('/');
+    Runtime.x86ReleaseChannel = Runtime.armReleaseChannel.replace(/arm/g,'x86');
     Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
   },
 
@@ -133,7 +134,7 @@ var Runtime = {
     // Set up Crosswalk download
     var download = new Download({ extract: true, strip: 1, mode: '755' })
       .get(Runtime.armReleaseChannel)
-      .get(Runtime.armReleaseChannel.replace(/arm/g,'x86'))
+      .get(Runtime.x86ReleaseChannel)
       .dest(Runtime.xwalkDestination)
       .use(progress());
 
