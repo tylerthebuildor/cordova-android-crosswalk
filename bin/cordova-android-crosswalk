@@ -37,13 +37,15 @@ var Runtime = {
    * Use `-r` or `--release` to specify Crosswalk release channel
    * Use `-x` or `--xwalk-version` to specify Crosswalk release version
    * Use `-t` or `--target` to specify the target android version
+   * Use `-a` or `--arch` to choose between arm and x86 architectures (defaults to both)
    * Use `-p` or `--preserve` to maintain existing Crosswalk bundle
    */
   Args: {
     release: argv._[0] || argv.r || argv.release || 'stable',
     xwalkVersion: argv._[1] || argv.x || argv['xwalk-version'] || null,
     target: argv._[2] || argv.t || argv.target || null,
-    preserve: argv._[3] || argv.p || argv.preserve
+    arch: argv._[3] || argv.a || argv.arch || null,
+    preserve: argv._[4] || argv.p || argv.preserve
   },
 
   /**
@@ -60,6 +62,7 @@ var Runtime = {
 
   init: function() {
     Runtime.Args.xwalkVersion = Runtime.Args.xwalkVersion || Runtime.ReleaseVersions[Runtime.Args.release];
+    Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
     Runtime.armReleaseChannel = [
       'https://download.01.org/crosswalk/releases/crosswalk/android',
       Runtime.Args.release,
@@ -67,7 +70,6 @@ var Runtime = {
       'arm/crosswalk-cordova-' + Runtime.Args.xwalkVersion + '-arm.zip'
     ].join('/');
     Runtime.x86ReleaseChannel = Runtime.armReleaseChannel.replace(/arm/g,'x86');
-    Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
   },
 
   /**
@@ -131,16 +133,27 @@ var Runtime = {
    */
   downloadCrosswalk: function() {
 
-    // Set up Crosswalk download
-    var download = new Download({ extract: true, strip: 1, mode: '755' })
-      .get(Runtime.armReleaseChannel)
-      .get(Runtime.x86ReleaseChannel)
-      .dest(Runtime.xwalkDestination)
-      .use(progress());
+    var architectures = ['arm', 'x86'],
+      download = new Download({ extract: true, strip: 1, mode: '755' })
+        .dest(Runtime.xwalkDestination)
+        .use(progress()),
+      architecture;
 
+    // Preserves Crosswalk bundle if flag is present
     if(Runtime.Args.preserve && fs.existsSync(Runtime.xwalkDestination)) {
       log.writeln('Preserving current Crosswalk ' + Runtime.Args.release);
-      return Runtime.buildReplace();
+      Runtime.buildReplace();
+      return;
+    }
+
+    // Set up Crosswalk download
+    architecture = architectures[architectures.indexOf(Runtime.Args.arch)];
+    if(architecture) {
+      log.writeln('Downloading Crosswalk for ' + architecture);
+      download.get(Runtime[architecture + 'ReleaseChannel']);
+    } else {
+      log.writeln('Downloading Crosswalk for arm and x86');
+      download.get(Runtime.armReleaseChannel).get(Runtime.x86ReleaseChannel);
     }
 
     // Remove previously downloaded Crosswalk version
