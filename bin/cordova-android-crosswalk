@@ -35,16 +35,19 @@ var Runtime = {
 	 * Tool arguments
 	 * Use `-r` or `--release` to specify the release channel
 	 * Use `-t` or `--target` to specify the target android version
+   * Use `-p` or `--preserve` to maintain existing Crosswalk bundle
 	 */
 	Args: {
 		release: argv._[0] || argv.r || argv.release || 'stable',
 		target: argv._[1] || argv.t || argv.target || null,
+    preserve: argv._[2] || argv.p || argv.preserve
 	},
 
 	/**
 	 * Void Main
 	 */
 	main: function() {
+    Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
 		if(Runtime.Args.target) {
 			Runtime.checkEnv();
 		} else {
@@ -116,11 +119,16 @@ var Runtime = {
 		// Set up Crosswalk download
 		var download = new Download({ extract: true, strip: 1, mode: '755' })
 			.get(Runtime.ReleaseChannels[Runtime.Args.release])
-			.dest(__dirname + '/downloads/crosswalk-' + Runtime.Args.release)
+      .get(Runtime.ReleaseChannels[Runtime.Args.release].replace(/arm/g,'x86'))
+			.dest(Runtime.xwalkDestination)
 			.use(progress());
 
-		// Remove previously downloaded Crosswalk version
-		fs.remove(__dirname + '/downloads/crosswalk-' + Runtime.Args.release,
+		if(Runtime.Args.preserve && fs.existsSync(Runtime.xwalkDestination)) {
+      log.writeln('Preserving current Crosswalk ' + Runtime.Args.release);
+      return Runtime.buildReplace();
+    }
+    // Remove previously downloaded Crosswalk version
+		fs.remove(Runtime.xwalkDestination,
 			function(err){
 				if(err) {
 					log.error(err);
@@ -158,13 +166,13 @@ var Runtime = {
 		// Replace with Crosswalks framework folder
 		defer.promise.then(function() {
 			log.writeln('Removed old CordovaLib');
-			fs.copy(__dirname + '/downloads/crosswalk-' + Runtime.Args.release + '/framework', './platforms/android/CordovaLib', defer.resolve);
+			fs.copy(Runtime.xwalkDestination + '/framework', './platforms/android/CordovaLib', defer.resolve);
 		});
 
 		// Replace VERSION file
 		defer.promise.then(function() {
 			log.writeln('./platforms/android/CordovaLib was replaced with the Crosswalk ' + Runtime.Args.release + ' framework');
-			fs.copy(__dirname + '/downloads/crosswalk-' + Runtime.Args.release + '/VERSION', './platforms/android/VERSION', defer.resolve);
+			fs.copy(Runtime.xwalkDestination + '/VERSION', './platforms/android/VERSION', defer.resolve);
 		});
 
 		// Build Permissions
