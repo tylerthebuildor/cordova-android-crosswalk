@@ -34,14 +34,14 @@ var Runtime = {
 
   /**
    * Tool arguments
-   * Use `-r` or `--release` to specify the release channel
-   * Use `-v` or `--version` to specify the release version
+   * Use `-r` or `--release` to specify Crosswalk release channel
+   * Use `-x` or `--xwalk-version` to specify Crosswalk release version
    * Use `-t` or `--target` to specify the target android version
    * Use `-p` or `--preserve` to maintain existing Crosswalk bundle
    */
   Args: {
     release: argv._[0] || argv.r || argv.release || 'stable',
-    version: argv._[1] || argv.v || argv.version || null,
+    xwalkVersion: argv._[1] || argv.x || argv['xwalk-version'] || null,
     target: argv._[2] || argv.t || argv.target || null,
     preserve: argv._[3] || argv.p || argv.preserve
   },
@@ -59,12 +59,12 @@ var Runtime = {
   },
 
   init: function() {
-    Runtime.Args.version = Runtime.Args.version || Runtime.ReleaseVersions[Runtime.Args.release];
+    Runtime.Args.xwalkVersion = Runtime.Args.xwalkVersion || Runtime.ReleaseVersions[Runtime.Args.release];
     Runtime.armReleaseChannel = [
       'https://download.01.org/crosswalk/releases/crosswalk/android',
       Runtime.Args.release,
-      Runtime.Args.version,
-      'arm/crosswalk-cordova-' + Runtime.Args.version + '-arm.zip'
+      Runtime.Args.xwalkVersion,
+      'arm/crosswalk-cordova-' + Runtime.Args.xwalkVersion + '-arm.zip'
     ].join('/');
     Runtime.x86ReleaseChannel = Runtime.armReleaseChannel.replace(/arm/g,'x86');
     Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
