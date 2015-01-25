@@ -21,39 +21,53 @@ var Runtime = {
 	 */
 	isWin: /^win/.test(process.platform),
 
-	/**
-	 * Release Channels
-	 * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
-	 */
-	ReleaseChannels: {
-		stable: 'https://download.01.org/crosswalk/releases/crosswalk/android/stable/9.38.208.10/arm/crosswalk-cordova-9.38.208.10-arm.zip',
-		beta: 'https://download.01.org/crosswalk/releases/crosswalk/android/beta/10.39.235.9/arm/crosswalk-cordova-10.39.235.9-arm.zip',
-		canary: 'https://download.01.org/crosswalk/releases/crosswalk/android/canary/11.39.258.0/arm/crosswalk-cordova-11.39.258.0-arm.zip'
-	},
+  /**
+   * Release Versions
+   * Latest versions of crosswalk bundles
+   * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
+   */
+  ReleaseVersions: {
+    stable: '9.38.208.10',
+    beta: '10.39.235.9',
+    canary: '11.39.258.0'
+  },
 
 	/**
 	 * Tool arguments
 	 * Use `-r` or `--release` to specify the release channel
+   * Use `-v` or `--version` to specify the release version
 	 * Use `-t` or `--target` to specify the target android version
    * Use `-p` or `--preserve` to maintain existing Crosswalk bundle
 	 */
 	Args: {
 		release: argv._[0] || argv.r || argv.release || 'stable',
-		target: argv._[1] || argv.t || argv.target || null,
-    preserve: argv._[2] || argv.p || argv.preserve
+    version: argv._[1] || argv.v || argv.version || null,
+		target: argv._[2] || argv.t || argv.target || null,
+    preserve: argv._[3] || argv.p || argv.preserve
 	},
 
 	/**
 	 * Void Main
 	 */
 	main: function() {
-    Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
+    Runtime.init();
 		if(Runtime.Args.target) {
 			Runtime.checkEnv();
 		} else {
 			Runtime.getSDKTarget();
 		}
 	},
+
+  init: function() {
+    Runtime.Args.version = Runtime.Args.version || Runtime.ReleaseVersions[Runtime.Args.release];
+    Runtime.releaseChannel = [
+      'https://download.01.org/crosswalk/releases/crosswalk/android',
+      Runtime.Args.release,
+      Runtime.Args.version,
+      'arm/crosswalk-cordova-' + Runtime.Args.version + '-arm.zip'
+    ].join('/');
+    Runtime.xwalkDestination = __dirname + '/downloads/crosswalk-' + Runtime.Args.release;
+  },
 
 	/**
 	 * Get SDK target
@@ -118,8 +132,8 @@ var Runtime = {
 
 		// Set up Crosswalk download
 		var download = new Download({ extract: true, strip: 1, mode: '755' })
-			.get(Runtime.ReleaseChannels[Runtime.Args.release])
-      .get(Runtime.ReleaseChannels[Runtime.Args.release].replace(/arm/g,'x86'))
+			.get(Runtime.releaseChannel)
+      .get(Runtime.releaseChannel.replace(/arm/g,'x86'))
 			.dest(Runtime.xwalkDestination)
 			.use(progress());
 
@@ -127,6 +141,7 @@ var Runtime = {
       log.writeln('Preserving current Crosswalk ' + Runtime.Args.release);
       return Runtime.buildReplace();
     }
+
     // Remove previously downloaded Crosswalk version
 		fs.remove(Runtime.xwalkDestination,
 			function(err){
