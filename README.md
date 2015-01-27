@@ -3,7 +3,7 @@
 This command line tool is an easy way to migrate your existing Cordova based (including Ionic) projects over to use Crosswalks Chromium webview. The performance benefit is huge, you get access to all the latest web APIs, and the only major draw back is increased apk size.
 
 ### Version
-0.1.6
+0.2.0
 
 ### Installation
 
@@ -21,23 +21,40 @@ Simply enter your projects root folder and run:
 $ cordova-android-crosswalk
 ```
 
-This command defaults to Crosswalks 'stable' Cordova Android release and automatically finds your Android SDK target using the `$ android list` command and some regex magic. Crosswalk also offers 'beta' and 'canary' releases if you'd like to change that or the Android SDK target use these flags:
+Use `-r` or `--release` to specify Crosswalk release channel. Three
+possible choices "canaray", "beta", or "stable". Defaults to "stable".
 
 ```sh
-$ cordova-android-crosswalk --release canary --target android-19
+$ cordova-android-crosswalk -r canary
 ```
 
-or
+Use `-t` or `--target` to specify the target android version. Defaults to
+highest target version from `android list target -c`.
 
 ```sh
-$ cordova-android-crosswalk -r canary -t android-19
+$ cordova-android-crosswalk -t android-21
 ```
 
-You can also use `-p` or `--preserve` to maintain your existing Crosswalk bundle.
-This allows you to avoid re-downloading the Crosswalk bundle everytime you run
-the tool.
+Use `-p` or `--preserve` to maintain your prexisting Crosswalk bundle download.
+Default downloads Crosswalk everytime.
 
-`$cordova-android-crosswalk -p`
+```sh
+$ cordova-android-crosswalk -p
+```
+Use `-x` or `--xwalk-version` to specify Crosswalk release version. Defaults
+to latest stable version.
+
+```sh
+$ cordova-android-crosswalk -x 9.38.208.10
+```
+
+Use `-a` or `--arch` to choose between arm and x86 architectures. Two possible
+chioces "x86" or "arm". Defaults to both.
+
+```sh
+$ cordova-android-crosswalk -a x86
+```
+
 
 ### Todo's
 

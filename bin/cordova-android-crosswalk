@@ -76,9 +76,10 @@ var Runtime = {
    * Get SDK target
    */
   getSDKTarget: function() {
-    exec('android list')
+    exec('android list target -c')
       .then(function(result) {
-        Runtime.Args.target = result.stdout.match(/w*android-\w*/)[0];
+        var androidList = result.stdout.match(/w*android-\w*/g);
+        Runtime.Args.target = androidList[androidList.length - 1];
 
         log.writeln('Found SDK target: ' + Runtime.Args.target);
         Runtime.checkEnv();
