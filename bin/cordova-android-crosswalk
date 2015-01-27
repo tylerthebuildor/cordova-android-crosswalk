@@ -245,6 +245,9 @@ var Runtime = {
           network: false
         };
 
+        // Make sure uses-permissions array exists
+        result.manifest['uses-permission'] = result.manifest['uses-permission'] || [];
+
         // Check if Permissions have already been added
         for(var i=0; i<result.manifest['uses-permission'].length; i++) {
           if(JSON.stringify(result.manifest['uses-permission'][i]) === '{"$":{"android:name":"android.permission.ACCESS_WIFI_STATE"}}') {
