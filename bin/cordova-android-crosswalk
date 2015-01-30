@@ -296,7 +296,7 @@ var Runtime = {
    */
   buildFinal: function() {
     var pathCmd = Runtime.isWin ? 'SET' : 'export';
-    var commands = pathCmd + ' ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Runtime.Args.target + '" && ant debug && cd ../../..';
+    var commands = pathCmd + ' ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Runtime.Args.target + '" && ant debug && cd .. && rm -Rf ant-gen && rm -Rf ant-build';
 
     // Executes the custom tidy up commands
     exec(commands)
