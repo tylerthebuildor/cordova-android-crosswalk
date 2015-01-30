@@ -27,9 +27,20 @@ var Runtime = {
    * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
    */
   ReleaseVersions: {
-    stable: '9.38.208.10',
-    beta: '10.39.235.9',
-    canary: '11.39.258.0'
+    stable: '10.39.235.15',
+    beta: '11.40.277.1',
+    canary: '12.40.278.0'
+  },
+
+  /**
+   * Required Platforms
+   * Each release of Crosswalk requires a different version of the
+   * android platform
+   */
+  RequiredPlatforms: {
+    stable: '3.6.3',
+    beta: '3.6.3',
+    canary: '3.6.3'
   },
 
   /**
@@ -98,7 +109,8 @@ var Runtime = {
         if(err) {
           log.error(err);
           log.writeln('Either this is not the root folder of a Cordova Project');
-          log.writeln('Or you have yet to add the android platform "cordova platform add android@3.5"');
+          log.writeln('Or you have yet to add the android platform "cordova platform add android@' +
+          	Runtime.RequiredPlatforms[Runtime.Args.release] + '"');
         } else {
           Runtime.checkCordovaVersion();
         }
@@ -112,16 +124,21 @@ var Runtime = {
     var printCmd = Runtime.isWin ? 'type' : 'cat';
     exec(printCmd + ' platforms/android/cordova/version')
       .then(function(result) {
-        var is35 = result.stdout.match(/w*3.5\w*/);
+      	var versionNumber = new RegExp('\\w*' + Runtime.RequiredPlatforms[Runtime.Args.release] + '\\w*');
+        var isCorrectVersion = result.stdout.match(versionNumber);
 
-        if(is35) {
-          log.writeln('You\'re already running Cordova 3.5. Good job!');
+        if(isCorrectVersion) {
+          log.writeln('You\'re already running Cordova ' +
+          	Runtime.RequiredPlatforms[Runtime.Args.release] +
+          	'. Good job!');
           Runtime.downloadCrosswalk();
         } else {
-          log.writeln('Crosswalk requires Cordova 3.5!');
-          log.writeln('Don\'t worry you can still use your current version of Cordova.');
+          log.writeln('Crosswalk ' +
+          	Runtime.Args.release + ' requires the android platform v' +
+          	Runtime.RequiredPlatforms[Runtime.Args.release] +'!');
           log.writeln('First remove your current android platform "cordova platform remove android"');
-          log.writeln('Then add it back while specificying the version "cordova platform add android@3.5"');
+          log.writeln('Then add it back while specificying the version "cordova platform add android@' +
+          	Runtime.RequiredPlatforms[Runtime.Args.release] + '"');
         }
       })
       .fail(function(err) {
@@ -292,11 +309,19 @@ var Runtime = {
    * cd platforms/android/CordovaLib/
    * android update project --subprojects --path . --target "android-19"
    * ant debug
-   * cd ../../..
+   * rm -Rf ant-gen
+   * rm -Rf ant-build
    */
   buildFinal: function() {
     var pathCmd = Runtime.isWin ? 'SET' : 'export';
-    var commands = pathCmd + ' ANDROID_HOME=$(dirname $(dirname $(which android))) && cd platforms/android/CordovaLib/ && android update project --subprojects --path . --target "' + Runtime.Args.target + '" && ant debug && cd .. && rm -Rf ant-gen && rm -Rf ant-build';
+    var commands = pathCmd +
+    ' ANDROID_HOME=$(dirname $(dirname $(which android))) &&' +
+    ' cd platforms/android/CordovaLib/ &&' +
+    ' android update project --subprojects --path . --target "' + Runtime.Args.target + '" &&' +
+    ' ant debug &&' +
+    ' cd .. &&' +
+    ' rm -Rf ant-gen &&' +
+    ' rm -Rf ant-build';
 
     // Executes the custom tidy up commands
     exec(commands)
