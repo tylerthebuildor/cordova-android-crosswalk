@@ -3,7 +3,7 @@
 This command line tool is an easy way to migrate your existing Cordova based (including Ionic) projects over to use Crosswalks Chromium webview. The performance benefit is huge, you get access to all the latest web APIs, and the only major draw back is increased apk size.
 
 ### Version
-0.3.1
+0.3.2
 
 ### Installation
 

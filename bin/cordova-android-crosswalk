@@ -121,8 +121,10 @@ var Runtime = {
    * Check Cordova version
    */
   checkCordovaVersion: function() {
-    var printCmd = Runtime.isWin ? 'type' : 'cat';
-    exec(printCmd + ' platforms/android/cordova/version')
+    var printCmd = Runtime.isWin ?
+    	'cd platforms/android/cordova && type version' :
+    	'cat platforms/android/cordova/version';
+    exec(printCmd)
       .then(function(result) {
       	var versionNumber = new RegExp('\\w*' + Runtime.RequiredPlatforms[Runtime.Args.release] + '\\w*');
         var isCorrectVersion = result.stdout.match(versionNumber);
