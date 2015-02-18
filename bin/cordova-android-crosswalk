@@ -164,9 +164,12 @@ var Runtime = {
 
     var architectures = ['arm', 'x86'],
       download = new Download({ extract: true, strip: 1, mode: '755' })
-        .dest(Runtime.xwalkDestination)
         .use(progress()),
-      architecture;
+      architecture = architectures[architectures.indexOf(Runtime.Args.arch)];
+
+    // Sets Crosswalk destination according to architecture
+    Runtime.xwalkDestination += '/' + (architecture || 'all');
+    download.dest(Runtime.xwalkDestination);
 
     // Preserves Crosswalk bundle if flag is present
     if(Runtime.Args.preserve && fs.existsSync(Runtime.xwalkDestination)) {
@@ -176,7 +179,6 @@ var Runtime = {
     }
 
     // Set up Crosswalk download
-    architecture = architectures[architectures.indexOf(Runtime.Args.arch)];
     if(architecture) {
       log.writeln('Downloading Crosswalk for ' + architecture);
       download.get(Runtime[architecture + 'ReleaseChannel']);
