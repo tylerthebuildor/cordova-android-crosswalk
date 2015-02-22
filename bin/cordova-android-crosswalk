@@ -22,6 +22,11 @@ var Runtime = {
   isWin: /^win/.test(process.platform),
 
   /**
+   * Tool Version
+   */
+  version: '0.3.3',
+
+  /**
    * Release Versions
    * Latest versions of crosswalk bundles
    * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
@@ -56,7 +61,10 @@ var Runtime = {
     xwalkVersion: argv._[1] || argv.x || argv['xwalk-version'] || null,
     target: argv._[2] || argv.t || argv.target || null,
     arch: argv._[3] || argv.a || argv.arch || null,
-    preserve: argv._[4] || argv.p || argv.preserve
+    preserve: argv._[4] || argv.p || argv.preserve,
+    force: argv._[5] || argv.f || argv.force || null,
+    help: argv._[6] || argv.h || argv.help || null,
+    version: argv._[7] || argv.v || argv.version || null
   },
 
   /**
@@ -129,7 +137,7 @@ var Runtime = {
       	var versionNumber = new RegExp('\\w*' + Runtime.RequiredPlatforms[Runtime.Args.release] + '\\w*');
         var isCorrectVersion = result.stdout.match(versionNumber);
 
-        if(isCorrectVersion) {
+        if(isCorrectVersion || Runtime.Args.force) {
           log.writeln('You\'re already running Cordova ' +
           	Runtime.RequiredPlatforms[Runtime.Args.release] +
           	'. Good job!');
@@ -141,6 +149,7 @@ var Runtime = {
           log.writeln('First remove your current android platform "cordova platform remove android"');
           log.writeln('Then add it back while specificying the version "cordova platform add android@' +
           	Runtime.RequiredPlatforms[Runtime.Args.release] + '"');
+          log.writeln('If you know what you\'re doing you can use force "-f" to suppress this warning');
         }
       })
       .fail(function(err) {
@@ -341,4 +350,18 @@ var Runtime = {
 /**
  * Init Main
  */
-Runtime.main();
+if(Runtime.Args.help) {
+	log.writeln('Command-line Flags/Options');
+	log.writeln('\t -r, --release ');
+	log.writeln('\t -t, --target');
+	log.writeln('\t -p, --preserve');
+	log.writeln('\t -x, --xwalk-version');
+	log.writeln('\t -a, --arch');
+	log.writeln('\t -f, --force');
+	log.writeln('\t -h, --help');
+	log.writeln('\t -v, --version');
+} else if(Runtime.Args.version) {
+	log.writeln(Runtime.version);
+} else {
+	Runtime.main();
+}
