@@ -81,8 +81,8 @@ $ cordova-android-crosswalk -v
  - ~~Add Cordova version check for 3.5~~
  - Pressure crosswalk-project.org to offer a latest-release url for each build
  - ~~Implement promises to clean up code~~
- - ~~Add help flag that prints commands
- - ~~Add version flag
+ - ~~Add help flag that prints commands~~
+ - ~~Add version flag~~
  - ~~Implement more helpful errors~~
 
 License
