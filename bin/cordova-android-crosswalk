@@ -167,8 +167,8 @@ var Runtime = {
         .use(progress()),
       architecture = architectures[architectures.indexOf(Runtime.Args.arch)];
 
-    // Sets Crosswalk destination according to architecture
-    Runtime.xwalkDestination += '/' + (architecture || 'all');
+    // Sets Crosswalk destination based on xwalk version and architecture
+    Runtime.xwalkDestination += '/' + Runtime.Args.xwalkVersion + '-' + (architecture || 'FAT');
     download.dest(Runtime.xwalkDestination);
 
     // Preserves Crosswalk bundle if flag is present
