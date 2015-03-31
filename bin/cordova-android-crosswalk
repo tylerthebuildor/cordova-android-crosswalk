@@ -325,7 +325,7 @@ var Runtime = {
    */
   buildFinal: function() {
     var pathCmd = Runtime.isWin ? 'SET' : 'export';
-    var removeCmd = Runtime.isWin ? ' rd /S /Q ' : ' rm -Rf ';
+    var removeCmd = Runtime.isWin ? ' IF EXIST rd /S /Q ' : ' rm -Rf ';
     var commands = pathCmd +
     ' ANDROID_HOME=$(dirname $(dirname $(which android))) &&' +
     ' cd platforms/android/CordovaLib/ &&' +
