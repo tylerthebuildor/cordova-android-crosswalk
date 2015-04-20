@@ -32,9 +32,9 @@ var Runtime = {
    * We must pressure crosswalk-project.org to offer a 'latest-release' url for each release channel
    */
   ReleaseVersions: {
-    stable: '10.39.235.15',
-    beta: '11.40.277.1',
-    canary: '12.40.278.0'
+    stable: '11.40.277.7',
+    beta: '12.41.296.4',
+    canary: '13.41.313.0'
   },
 
   /**
