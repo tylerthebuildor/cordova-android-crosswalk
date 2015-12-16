@@ -1,3 +1,12 @@
+# ** Warning: No Longer Active! **
+## ** Check out the links below for alternatives **
+### Links
+* https://crosswalk-project.org/documentation/cordova/cordova_4.html
+* https://github.com/crosswalk-project/cordova-plugin-crosswalk-webview
+* https://www.npmjs.com/package/cordova-plugin-crosswalk-webview/
+
+---
+
 # cordova-android-crosswalk
 
 This command line tool is an easy way to migrate your existing Cordova based (including Ionic) projects over to use Crosswalks Chromium webview. The performance benefit is huge, you get access to all the latest web APIs, and the only major draw back is increased apk size.
