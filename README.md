@@ -1,5 +1,5 @@
 # ** Warning: No Longer Active! **
-## ** Check out the links below for alternatives **
+## ** Instead use Crosswalk's Official Implementation **
 ### Links
 * https://crosswalk-project.org/documentation/cordova/cordova_4.html
 * https://github.com/crosswalk-project/cordova-plugin-crosswalk-webview
