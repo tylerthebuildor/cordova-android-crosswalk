@@ -138,7 +138,7 @@ var Runtime = {
         var isCorrectVersion = result.stdout.match(versionNumber);
 
         if(isCorrectVersion || Runtime.Args.force) {
-          log.writeln('You\'re already running Cordova ' +
+          log.info('You\'re already running Cordova ' +
           	Runtime.RequiredPlatforms[Runtime.Args.release] +
           	'. Good job!');
           Runtime.downloadCrosswalk();
@@ -164,36 +164,28 @@ var Runtime = {
 
     var architectures = ['arm', 'x86'],
       download = new Download({ extract: true, strip: 1, mode: '755' })
-        .dest(Runtime.xwalkDestination)
         .use(progress()),
-      architecture;
+      architecture = architectures[architectures.indexOf(Runtime.Args.arch)];
+
+    // Sets Crosswalk destination based on xwalk version and architecture
+    Runtime.xwalkDestination += '/' + Runtime.Args.xwalkVersion + '-' + (architecture || 'FAT');
+    download.dest(Runtime.xwalkDestination);
 
     // Preserves Crosswalk bundle if flag is present
     if(Runtime.Args.preserve && fs.existsSync(Runtime.xwalkDestination)) {
-      log.writeln('Preserving current Crosswalk ' + Runtime.Args.release);
+      log.info('Preserving current Crosswalk ' + Runtime.Args.xwalkVersion);
       Runtime.buildReplace();
       return;
     }
 
     // Set up Crosswalk download
-    architecture = architectures[architectures.indexOf(Runtime.Args.arch)];
     if(architecture) {
-      log.writeln('Downloading Crosswalk for ' + architecture);
+      log.info('Downloading Crosswalk ' + Runtime.Args.xwalkVersion + ' for ' + architecture);
       download.get(Runtime[architecture + 'ReleaseChannel']);
     } else {
-      log.writeln('Downloading Crosswalk for arm and x86');
+      log.info('Downloading Crosswalk ' + Runtime.Args.xwalkVersion + ' for arm and x86');
       download.get(Runtime.armReleaseChannel).get(Runtime.x86ReleaseChannel);
     }
-
-    // Remove previously downloaded Crosswalk version
-    fs.remove(Runtime.xwalkDestination,
-      function(err){
-        if(err) {
-          log.error(err);
-        } else {
-          log.writeln('Removed old Crosswalk ' + Runtime.Args.release);
-        }
-      });
 
     // Start Downloading
     download.run(
@@ -201,7 +193,7 @@ var Runtime = {
         if(err) {
           log.error(err);
         } else {
-          log.writeln('Crosswalk ' + Runtime.Args.release + ' downloaded succesfully');
+          log.success('Crosswalk ' + Runtime.Args.release + ' downloaded succesfully');
           Runtime.buildReplace();
         }
       });
@@ -339,7 +331,7 @@ var Runtime = {
     exec(commands)
       .then(function(result) {
         log.writeln(result.stdout);
-        log.writeln('Congratulations! you are now using Crosswalk ' + Runtime.Args.release + '. Go ahead and and try it out "cordova run android"');
+        log.success('Congratulations! you are now using Crosswalk ' + Runtime.Args.release + '. Go ahead and and try it out "cordova run android"');
       })
       .fail(function(err) {
         log.error(err);
